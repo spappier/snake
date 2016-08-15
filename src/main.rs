@@ -9,19 +9,43 @@ use sdl2::rect::Point;
 use sdl2::rect::Rect;
 use sdl2::pixels::Color;
 
+
 #[derive(PartialEq)]
 enum Direction { Up, Down, Left, Right }
 
+
+struct Game {
+    snake: Snake,
+    apple: Point,
+    score: u32,
+}
+
+impl Game {
+    fn new() -> Game {// should take width and height (32, 24)
+        Game {
+            snake: Snake::new(3, 3),
+            apple: random_point(),
+            score: 0,
+        }
+    }
+}
+
+
 struct Snake {
-    direction: Direction,
     body: Vec<Point>,
+    direction: Direction,
+    last_direction: Direction,
 }
 
 impl Snake {
     fn new(x: i32, y: i32) -> Snake {
         let mut body = Vec::with_capacity(15);
         body.push(Point::new(x, y));
-        Snake { direction: Direction::Right, body: body }
+        Snake {
+            body: body,
+            direction: Direction::Right,
+            last_direction: Direction::Up,
+        }
     }
 
     fn update(&mut self, grew: bool) {
@@ -68,17 +92,13 @@ fn main() {
     let video_subsystem = sdl_context.video().unwrap();
     let window = video_subsystem.window("Snake", 640, 480)
         .position_centered()
-        .opengl()
         .build()
         .unwrap();
 
     let mut renderer = window.renderer().build().unwrap();
-
     let mut event_pump = sdl_context.event_pump().unwrap();
 
-    let mut snake = Snake::new(15, 11);
-    let mut apple: Point = random_point();
-    let mut score: u32 = 0;
+    let mut game = Game::new();
 
     'running: loop {
         for event in event_pump.poll_iter() {
@@ -88,23 +108,23 @@ fn main() {
                 },
                 Event::KeyDown { keycode: Some(Keycode::Space), .. } => println!("pause"),
                 Event::KeyDown { keycode: Some(Keycode::Up), .. } => {
-                    if snake.direction != Direction::Down {
-                        snake.direction = Direction::Up;
+                    if game.snake.direction != Direction::Down {
+                        game.snake.direction = Direction::Up;
                     }
                 },
                 Event::KeyDown { keycode: Some(Keycode::Down), .. } => {
-                    if snake.direction != Direction::Up {
-                        snake.direction = Direction::Down;
+                    if game.snake.direction != Direction::Up {
+                        game.snake.direction = Direction::Down;
                     }
                 },
                 Event::KeyDown { keycode: Some(Keycode::Left), .. } => {
-                    if snake.direction != Direction::Right {
-                        snake.direction = Direction::Left;
+                    if game.snake.direction != Direction::Right {
+                        game.snake.direction = Direction::Left;
                     }
                 },
                 Event::KeyDown { keycode: Some(Keycode::Right), .. } => {
-                    if snake.direction != Direction::Left {
-                        snake.direction = Direction::Right;
+                    if game.snake.direction != Direction::Left {
+                        game.snake.direction = Direction::Right;
                     }
                 },
                 _ => {}
@@ -112,34 +132,35 @@ fn main() {
         }
 
 
-        renderer.set_draw_color(Color::RGB(0, 0, 0));
-        renderer.clear();
-
-        renderer.set_draw_color(Color::RGB(128, 0, 0));
-        for point in &snake.body {
-            renderer.fill_rect(Rect::new(point.x() * 20, point.y() * 20, 19, 19)).unwrap();
-        }
-
-        renderer.set_draw_color(Color::RGB(0, 128, 0));
-        renderer.fill_rect(Rect::new(apple.x() * 20, apple.y() * 20, 19, 19)).unwrap();
-
-        renderer.present();
-
-
-        if snake.colliding() {
+        if game.snake.colliding() {
             println!("you lose");
             break 'running;
         }
 
-        if snake.on_apple(&apple) {
-            score += snake.body.len() as u32;
-            //game_speed += 0.1;
-            println!("score: {}", score);
-            apple = random_point();
-            snake.update(true);
+        if game.snake.on_apple(&game.apple) {
+            game.score += game.snake.body.len() as u32;
+            println!("score: {}", game.score);
+            game.apple = random_point();
+            game.snake.update(true);
         } else {
-            snake.update(false);
+            game.snake.update(false);
         }
+
+
+
+        renderer.set_draw_color(Color::RGB(0, 0, 0));
+        renderer.clear();
+
+        renderer.set_draw_color(Color::RGB(128, 0, 0));
+        for point in &game.snake.body {
+            renderer.fill_rect(Rect::new(point.x() * 20, point.y() * 20, 19, 19)).unwrap();
+        }
+
+        renderer.set_draw_color(Color::RGB(0, 128, 0));
+        renderer.fill_rect(Rect::new(game.apple.x() * 20, game.apple.y() * 20, 19, 19)).unwrap();
+
+        renderer.present();
+
 
         std::thread::sleep(Duration::from_millis(80));
     }
