@@ -3,8 +3,6 @@ extern crate rand;
 
 use std::time::Duration;
 
-use rand::Rng;
-
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::rect::Point;
@@ -60,8 +58,9 @@ impl Snake {
     }
 }
 
-fn random_point<R: Rng>(rng: &mut R) -> Point {
-    Point::new(rng.gen_range(0, 31) as i32, rng.gen_range(0, 23) as i32)
+fn random_point() -> Point {
+    let (x, y) = rand::random::<(i32, i32)>();
+    Point::new(x.abs() % 31, y.abs() % 23)
 }
 
 fn main() {
@@ -78,8 +77,7 @@ fn main() {
     let mut event_pump = sdl_context.event_pump().unwrap();
 
     let mut snake = Snake::new(15, 11);
-    let mut rng = rand::thread_rng();
-    let mut apple: Point = random_point(&mut rng);
+    let mut apple: Point = random_point();
     let mut score: u32 = 0;
 
     'running: loop {
@@ -137,7 +135,7 @@ fn main() {
             score += snake.body.len() as u32;
             //game_speed += 0.1;
             println!("score: {}", score);
-            apple = random_point(&mut rng);
+            apple = random_point();
             snake.update(true);
         } else {
             snake.update(false);
