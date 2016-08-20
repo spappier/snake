@@ -63,6 +63,20 @@ impl Game {
             _ => {},
         }
     }
+
+    fn update(&mut self) {
+        if self.snake.colliding() {
+            self.state = GameState::Lost;
+        }
+
+        if self.snake.on_apple(&self.apple) {
+            self.score += self.snake.body.len() as u32;
+            self.apple = random_point();
+            self.snake.update(true);
+        } else {
+            self.snake.update(false);
+        }
+    }
 }
 
 
@@ -143,22 +157,11 @@ fn main() {
             }
         }
 
+        game.update();
 
-        if game.snake.colliding() {
-            println!("you lose");
+        if game.state == GameState::Lost {
             break 'running;
         }
-
-        if game.snake.on_apple(&game.apple) {
-            game.score += game.snake.body.len() as u32;
-            println!("score: {}", game.score);
-            game.apple = random_point();
-            game.snake.update(true);
-        } else {
-            game.snake.update(false);
-        }
-
-
 
         renderer.set_draw_color(Color::RGB(0, 0, 0));
         renderer.clear();
@@ -172,7 +175,6 @@ fn main() {
         renderer.fill_rect(Rect::new(game.apple.x() * 20, game.apple.y() * 20, 19, 19)).unwrap();
 
         renderer.present();
-
 
         std::thread::sleep(Duration::from_millis(80));
     }
