@@ -2,6 +2,7 @@ extern crate sdl2;
 extern crate rand;
 
 use std::time::Duration;
+use std::collections::VecDeque;
 
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
@@ -66,24 +67,24 @@ impl Game {
 
 
 struct Snake {
-    body: Vec<Point>,
+    body: VecDeque<Point>,
     direction: Direction,
     last_direction: Direction,
 }
 
 impl Snake {
     fn new(x: i32, y: i32) -> Snake {
-        let mut body = Vec::with_capacity(15);
-        body.push(Point::new(x, y));
-        Snake {
-            body: body,
+        let mut snake = Snake {
+            body: VecDeque::with_capacity(15),
             direction: Direction::Right,
             last_direction: Direction::Up,
-        }
+        };
+        snake.body.push_front(Point::new(x, y));
+        snake
     }
 
     fn update(&mut self, grew: bool) {
-        let next = self.body[self.body.len() - 1] + match self.direction {
+        let next = self.body[0] + match self.direction {
             Direction::Up => Point::new(0, -1),
             Direction::Down => Point::new(0, 1),
             Direction::Left => Point::new(-1, 0),
@@ -91,25 +92,22 @@ impl Snake {
         };
 
         if !grew {
-            self.body.remove(0);
+            self.body.pop_back();
         }
 
-        self.body.push(next);
+        self.body.push_front(next);
     }
 
     fn on_apple(&self, apple: &Point) -> bool {
-        &self.body[self.body.len() - 1] == apple
+        self.body[0] == *apple
     }
 
     fn colliding(&self) -> bool {
-        let head: &Point = &self.body[self.body.len() - 1].clone();
+        let mut body_iter = self.body.iter();
+        let head: &Point = body_iter.next().unwrap();
 
-        if self.body.len() > 1 {
-            for point in &self.body[1..&self.body.len() - 1] {
-                if head == point {
-                    return true;
-                }
-            }
+        if body_iter.any(|piece| piece == head) {
+            return true;
         }
 
         head.x() < 0 || head.y() < 0 || head.x() > 31 || head.y() > 23
