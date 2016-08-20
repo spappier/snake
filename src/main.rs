@@ -11,10 +11,15 @@ use sdl2::pixels::Color;
 
 
 #[derive(PartialEq)]
+enum GameState { Running, Paused, Lost }
+
+
+#[derive(PartialEq)]
 enum Direction { Up, Down, Left, Right }
 
 
 struct Game {
+    state: GameState,
     snake: Snake,
     apple: Point,
     score: u32,
@@ -23,9 +28,38 @@ struct Game {
 impl Game {
     fn new() -> Game {// should take width and height (32, 24)
         Game {
+            state: GameState::Running,
             snake: Snake::new(3, 3),
             apple: random_point(),
             score: 0,
+        }
+    }
+
+    fn handle_key_press(&mut self, key: Keycode) {
+        use sdl2::keyboard::Keycode::*;
+        match key {
+            Space => self.state = GameState::Paused,
+            Up => {
+                if self.snake.direction != Direction::Down {
+                    self.snake.direction = Direction::Up;
+                }
+            },
+            Down => {
+                if self.snake.direction != Direction::Up {
+                    self.snake.direction = Direction::Down;
+                }
+            },
+            Left => {
+                if self.snake.direction != Direction::Right {
+                    self.snake.direction = Direction::Left;
+                }
+            },
+            Right => {
+                if self.snake.direction != Direction::Left {
+                    self.snake.direction = Direction::Right;
+                }
+            },
+            _ => {},
         }
     }
 }
@@ -106,28 +140,8 @@ fn main() {
                 Event::Quit {..} | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
                     break 'running
                 },
-                Event::KeyDown { keycode: Some(Keycode::Space), .. } => println!("pause"),
-                Event::KeyDown { keycode: Some(Keycode::Up), .. } => {
-                    if game.snake.direction != Direction::Down {
-                        game.snake.direction = Direction::Up;
-                    }
-                },
-                Event::KeyDown { keycode: Some(Keycode::Down), .. } => {
-                    if game.snake.direction != Direction::Up {
-                        game.snake.direction = Direction::Down;
-                    }
-                },
-                Event::KeyDown { keycode: Some(Keycode::Left), .. } => {
-                    if game.snake.direction != Direction::Right {
-                        game.snake.direction = Direction::Left;
-                    }
-                },
-                Event::KeyDown { keycode: Some(Keycode::Right), .. } => {
-                    if game.snake.direction != Direction::Left {
-                        game.snake.direction = Direction::Right;
-                    }
-                },
-                _ => {}
+                Event::KeyDown { keycode: Some(key), .. } => game.handle_key_press(key),
+                _ => {},
             }
         }
 
