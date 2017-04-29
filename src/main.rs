@@ -15,7 +15,7 @@ use sdl2::pixels::Color;
 enum GameState { Running, Paused, Lost }
 
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Copy, Clone)]
 enum Direction { Up, Down, Left, Right }
 
 
@@ -41,23 +41,23 @@ impl Game {
         match key {
             Space => self.state = GameState::Paused,
             Up => {
-                if self.snake.direction != Direction::Down {
-                    self.snake.direction = Direction::Up;
+                if self.snake.moved != Direction::Down {
+                    self.snake.moving = Direction::Up;
                 }
             },
             Down => {
-                if self.snake.direction != Direction::Up {
-                    self.snake.direction = Direction::Down;
+                if self.snake.moved != Direction::Up {
+                    self.snake.moving = Direction::Down;
                 }
             },
             Left => {
-                if self.snake.direction != Direction::Right {
-                    self.snake.direction = Direction::Left;
+                if self.snake.moved != Direction::Right {
+                    self.snake.moving = Direction::Left;
                 }
             },
             Right => {
-                if self.snake.direction != Direction::Left {
-                    self.snake.direction = Direction::Right;
+                if self.snake.moved != Direction::Left {
+                    self.snake.moving = Direction::Right;
                 }
             },
             _ => {},
@@ -82,23 +82,23 @@ impl Game {
 
 struct Snake {
     body: VecDeque<Point>,
-    direction: Direction,
-    last_direction: Direction,
+    moved: Direction,
+    moving: Direction,
 }
 
 impl Snake {
     fn new(x: i32, y: i32) -> Snake {
         let mut snake = Snake {
             body: VecDeque::with_capacity(15),
-            direction: Direction::Right,
-            last_direction: Direction::Up,
+            moved: Direction::Right,
+            moving: Direction::Right,
         };
         snake.body.push_front(Point::new(x, y));
         snake
     }
 
     fn update(&mut self, grew: bool) {
-        let next = self.body[0] + match self.direction {
+        let next = self.body[0] + match self.moving {
             Direction::Up => Point::new(0, -1),
             Direction::Down => Point::new(0, 1),
             Direction::Left => Point::new(-1, 0),
@@ -110,6 +110,8 @@ impl Snake {
         }
 
         self.body.push_front(next);
+
+        self.moved = self.moving;
     }
 
     fn on_apple(&self, apple: &Point) -> bool {
