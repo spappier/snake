@@ -12,11 +12,20 @@ use sdl2::pixels::Color;
 
 
 #[derive(PartialEq)]
-enum GameState { Running, Paused, Lost }
+enum GameState {
+    Running,
+    Paused,
+    Lost,
+}
 
 
 #[derive(PartialEq, Copy, Clone)]
-enum Direction { Up, Down, Left, Right }
+enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+}
 
 
 struct Game {
@@ -27,7 +36,8 @@ struct Game {
 }
 
 impl Game {
-    fn new() -> Game {// should take width and height (32, 24)
+    fn new() -> Game {
+        // should take width and height (32, 24)
         Game {
             state: GameState::Running,
             snake: Snake::new(3, 3),
@@ -44,23 +54,23 @@ impl Game {
                 if self.snake.moved != Direction::Down {
                     self.snake.moving = Direction::Up;
                 }
-            },
+            }
             Down => {
                 if self.snake.moved != Direction::Up {
                     self.snake.moving = Direction::Down;
                 }
-            },
+            }
             Left => {
                 if self.snake.moved != Direction::Right {
                     self.snake.moving = Direction::Left;
                 }
-            },
+            }
             Right => {
                 if self.snake.moved != Direction::Left {
                     self.snake.moving = Direction::Right;
                 }
-            },
-            _ => {},
+            }
+            _ => {}
         }
     }
 
@@ -98,12 +108,13 @@ impl Snake {
     }
 
     fn update(&mut self, grew: bool) {
-        let next = self.body[0] + match self.moving {
-            Direction::Up => Point::new(0, -1),
-            Direction::Down => Point::new(0, 1),
-            Direction::Left => Point::new(-1, 0),
-            Direction::Right => Point::new(1, 0),
-        };
+        let next = self.body[0] +
+                   match self.moving {
+                       Direction::Up => Point::new(0, -1),
+                       Direction::Down => Point::new(0, 1),
+                       Direction::Left => Point::new(-1, 0),
+                       Direction::Right => Point::new(1, 0),
+                   };
 
         if !grew {
             self.body.pop_back();
@@ -138,7 +149,8 @@ fn random_point() -> Point {
 fn main() {
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
-    let window = video_subsystem.window("Snake", 640, 480)
+    let window = video_subsystem
+        .window("Snake", 640, 480)
         .position_centered()
         .build()
         .unwrap();
@@ -151,11 +163,10 @@ fn main() {
     'running: loop {
         for event in event_pump.poll_iter() {
             match event {
-                Event::Quit {..} | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
-                    break 'running
-                },
+                Event::Quit { .. } |
+                Event::KeyDown { keycode: Some(Keycode::Escape), .. } => break 'running,
                 Event::KeyDown { keycode: Some(key), .. } => game.handle_key_press(key),
-                _ => {},
+                _ => {}
             }
         }
 
@@ -170,11 +181,15 @@ fn main() {
 
         renderer.set_draw_color(Color::RGB(128, 0, 0));
         for point in &game.snake.body {
-            renderer.fill_rect(Rect::new(point.x() * 20, point.y() * 20, 19, 19)).unwrap();
+            renderer
+                .fill_rect(Rect::new(point.x() * 20, point.y() * 20, 19, 19))
+                .unwrap();
         }
 
         renderer.set_draw_color(Color::RGB(0, 128, 0));
-        renderer.fill_rect(Rect::new(game.apple.x() * 20, game.apple.y() * 20, 19, 19)).unwrap();
+        renderer
+            .fill_rect(Rect::new(game.apple.x() * 20, game.apple.y() * 20, 19, 19))
+            .unwrap();
 
         renderer.present();
 
