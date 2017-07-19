@@ -27,6 +27,26 @@ enum Direction {
     Right,
 }
 
+impl Direction {
+    fn opposite(&self) -> Direction {
+        match *self {
+            Direction::Up => Direction::Down,
+            Direction::Down => Direction::Up,
+            Direction::Left => Direction::Right,
+            Direction::Right => Direction::Left,
+        }
+    }
+
+    fn to_point(&self) -> Point {
+        match *self {
+            Direction::Up => Point::new(0, -1),
+            Direction::Down => Point::new(0, 1),
+            Direction::Left => Point::new(-1, 0),
+            Direction::Right => Point::new(1, 0),
+        }
+    }
+}
+
 
 struct Game {
     state: GameState,
@@ -50,26 +70,10 @@ impl Game {
         use sdl2::keyboard::Keycode::*;
         match key {
             Space => self.state = GameState::Paused,
-            Up => {
-                if self.snake.moved != Direction::Down {
-                    self.snake.moving = Direction::Up;
-                }
-            }
-            Down => {
-                if self.snake.moved != Direction::Up {
-                    self.snake.moving = Direction::Down;
-                }
-            }
-            Left => {
-                if self.snake.moved != Direction::Right {
-                    self.snake.moving = Direction::Left;
-                }
-            }
-            Right => {
-                if self.snake.moved != Direction::Left {
-                    self.snake.moving = Direction::Right;
-                }
-            }
+            Up => self.snake.change_direction(Direction::Up),
+            Down => self.snake.change_direction(Direction::Down),
+            Left => self.snake.change_direction(Direction::Left),
+            Right => self.snake.change_direction(Direction::Right),
             _ => {}
         }
     }
@@ -107,14 +111,14 @@ impl Snake {
         snake
     }
 
+    fn change_direction(&mut self, direction: Direction) {
+        if self.moved != direction.opposite() {
+            self.moving = direction;
+        }
+    }
+
     fn update(&mut self, grew: bool) {
-        let next = self.body[0] +
-                   match self.moving {
-                       Direction::Up => Point::new(0, -1),
-                       Direction::Down => Point::new(0, 1),
-                       Direction::Left => Point::new(-1, 0),
-                       Direction::Right => Point::new(1, 0),
-                   };
+        let next = self.body[0] + self.moving.to_point();
 
         if !grew {
             self.body.pop_back();
