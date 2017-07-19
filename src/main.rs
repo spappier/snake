@@ -153,13 +153,19 @@ fn random_point() -> Point {
 fn main() {
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
+
     let window = video_subsystem
         .window("Snake", 640, 480)
         .position_centered()
         .build()
         .unwrap();
 
-    let mut renderer = window.renderer().build().unwrap();
+    let mut canvas = window
+        .into_canvas()
+        .present_vsync()
+        .build()
+        .unwrap();
+
     let mut event_pump = sdl_context.event_pump().unwrap();
 
     let mut game = Game::new();
@@ -180,22 +186,22 @@ fn main() {
             break 'running;
         }
 
-        renderer.set_draw_color(Color::RGB(0, 0, 0));
-        renderer.clear();
+        canvas.set_draw_color(Color::RGB(0, 0, 0));
+        canvas.clear();
 
-        renderer.set_draw_color(Color::RGB(128, 0, 0));
+        canvas.set_draw_color(Color::RGB(128, 0, 0));
         for point in &game.snake.body {
-            renderer
+            canvas
                 .fill_rect(Rect::new(point.x() * 20, point.y() * 20, 19, 19))
                 .unwrap();
         }
 
-        renderer.set_draw_color(Color::RGB(0, 128, 0));
-        renderer
+        canvas.set_draw_color(Color::RGB(0, 128, 0));
+        canvas
             .fill_rect(Rect::new(game.apple.x() * 20, game.apple.y() * 20, 19, 19))
             .unwrap();
 
-        renderer.present();
+        canvas.present();
 
         std::thread::sleep(Duration::from_millis(80));
     }
