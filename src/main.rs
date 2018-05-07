@@ -9,6 +9,12 @@ use sdl2::keyboard::Keycode;
 use sdl2::rect::Point;
 use sdl2::rect::Rect;
 use sdl2::pixels::Color;
+use sdl2::render::WindowCanvas;
+
+
+const BLACK: Color = Color {r: 0, g: 0, b: 0, a: 255};
+const RED: Color = Color {r: 128, g: 0, b: 0, a: 255};
+const GREEN: Color = Color {r: 0, g: 128, b: 0, a: 255};
 
 
 #[derive(PartialEq)]
@@ -66,14 +72,30 @@ impl Game {
         }
     }
 
+    fn is_paused(&self) -> bool {
+        self.state == GameState::Paused
+    }
+
+    fn is_lost(&self) -> bool {
+        self.state == GameState::Lost
+    }
+
     fn handle_key_press(&mut self, key: Keycode) {
         use sdl2::keyboard::Keycode::*;
         match key {
-            Space => self.state = GameState::Paused,
+            Space => self.pause_or_unpause(),
             Up => self.snake.change_direction(Direction::Up),
             Down => self.snake.change_direction(Direction::Down),
             Left => self.snake.change_direction(Direction::Left),
             Right => self.snake.change_direction(Direction::Right),
+            _ => {}
+        }
+    }
+
+    fn pause_or_unpause(&mut self) {
+        match self.state {
+            GameState::Running => self.state = GameState::Paused,
+            GameState::Paused => self.state = GameState::Running,
             _ => {}
         }
     }
@@ -180,29 +202,35 @@ fn main() {
             }
         }
 
-        game.update();
+        if !game.is_paused() {
+            game.update();
+        }
 
-        if game.state == GameState::Lost {
+        if game.is_lost() {
             break 'running;
         }
 
-        canvas.set_draw_color(Color::RGB(0, 0, 0));
-        canvas.clear();
-
-        canvas.set_draw_color(Color::RGB(128, 0, 0));
-        for point in &game.snake.body {
-            canvas
-                .fill_rect(Rect::new(point.x() * 20, point.y() * 20, 19, 19))
-                .unwrap();
-        }
-
-        canvas.set_draw_color(Color::RGB(0, 128, 0));
-        canvas
-            .fill_rect(Rect::new(game.apple.x() * 20, game.apple.y() * 20, 19, 19))
-            .unwrap();
-
-        canvas.present();
+        render(&mut canvas);
 
         std::thread::sleep(Duration::from_millis(80));
     }
+}
+
+fn render(canvas: &mut WindowCanvas) {
+    canvas.set_draw_color(BLACK);
+    canvas.clear();
+
+    canvas.set_draw_color(RED);
+    for point in &game.snake.body {
+        canvas
+            .fill_rect(Rect::new(point.x() * 20, point.y() * 20, 19, 19))
+            .unwrap();
+    }
+
+    canvas.set_draw_color(GREEN);
+    canvas
+        .fill_rect(Rect::new(game.apple.x() * 20, game.apple.y() * 20, 19, 19))
+        .unwrap();
+
+    canvas.present();
 }
